@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import logo from '../assets/div.svg';
 import emailLogo from '../assets/Vector.svg';
@@ -8,6 +9,7 @@ import { registerUser, loginUser } from '../services/authService';
 import './RegisterPage.css';
 
 const RegisterPage = ({ onForgotPassword }) => {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,14 +46,25 @@ const RegisterPage = ({ onForgotPassword }) => {
       }
 
     } catch (err) {
-      console.error(err);
+      console.error('Erro no cadastro:', err);
       // Melhor tratamento de erro
       let errorMessage = 'Erro ao cadastrar. Verifique os dados e tente novamente.';
       
       if (err.message) {
-        errorMessage = err.message;
-      } else if (err.response && err.response.data && err.response.data.detail) {
-        errorMessage = err.response.data.detail;
+        // Se a mensagem for uma string, usa diretamente
+        errorMessage = typeof err.message === 'string' ? err.message : String(err.message);
+      } else if (err.response && err.response.data) {
+        const detail = err.response.data.detail;
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (typeof detail === 'object' && detail !== null) {
+          errorMessage = detail.message || detail.error || JSON.stringify(detail);
+        }
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        // Último recurso: tenta extrair mensagem de qualquer propriedade
+        errorMessage = err.message || err.error || err.detail || String(err);
       }
       
       setError(errorMessage);
@@ -119,6 +132,11 @@ const RegisterPage = ({ onForgotPassword }) => {
 
           <button type="submit" className="login-button">Cadastrar</button>
         </form>
+
+        <div className="signup-section">
+          <p className="signup-text">Já tem uma conta?</p>
+          <button type="button" className="signup-button" onClick={() => navigate("/login")}>Fazer login</button>
+        </div>
 
         <footer className="footer">
           <p>&copy; 2025 CareerPath-AI. Todos os direitos reservados.</p>
