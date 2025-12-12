@@ -20,7 +20,11 @@ COPY migrations ./migrations
 
 RUN uv sync --locked
 
+COPY docker/wait-for-postgres.sh /wait-for-postgres.sh
+RUN chmod +x /wait-for-postgres.sh
+
 CMD ["sh", "-c", " \
+  /wait-for-postgres.sh postgres 5432 && \
   /app/.venv/bin/alembic upgrade heads && \
   /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 \
 "]
