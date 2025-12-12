@@ -8,8 +8,10 @@ from app.schemas.resume_analysis_schema import (
 )
 from app.utils.pdf_utils import check_pdf
 from app.repository.resume_analysis_repository import ResumeAnalysisRepository
+from app.core.logging_config import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
+import traceback
 
 
 class ResumeAnalysisService:
@@ -80,19 +82,27 @@ class ResumeAnalysisService:
                 limit=limit
             )
 
-            if not analyses:
-                raise HTTPException(
-                    status_code=404, detail="Nenhuma análise de currículo encontrada"
+            # Converte cada análise, tratando casos onde analysis_result pode ser None
+            analyses_response = [
+                ResumeAnalysisResponse(
+                    id=analysis.id,
+                    original_filename=analysis.original_filename or "",
+                    analysis_result=analysis.analysis_result if analysis.analysis_result is not None else {},
+                    created_at=analysis.created_at
                 )
+                for analysis in (analyses or [])
+            ]
 
             return ResumeAnalysisListResponse(
-                analyses=analyses,
+                analyses=analyses_response,
                 total_count=total_count
             )
         
         except HTTPException:
             raise
         except Exception as e:
+            logger.error(f"Erro ao buscar análises: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=500,
                 detail=f"Erro ao buscar análises: {str(e)}"

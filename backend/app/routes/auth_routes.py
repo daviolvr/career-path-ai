@@ -10,7 +10,7 @@ from app.schemas.auth_schema import (
     ResetPasswordRequest,
     LoginResponse,
 )
-from app.dependencies.security import verify_token
+from app.dependencies.security import verify_token, verify_refresh_token
 from app.models.user import User
 from app.services.user_services import UserService
 from app.dependencies.services import get_user_service
@@ -43,9 +43,12 @@ async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), user_serv
 
 
 @auth_router.post("/refresh", response_model=RefreshTokenResponse)
-async def use_refresh_token(user: User = Depends(verify_token), user_service: UserService = Depends(get_user_service)):
+async def use_refresh_token(
+    user: User = Depends(verify_refresh_token),
+    user_service: UserService = Depends(get_user_service)
+):
     """
-    Rota para gerar novo access token
+    Rota para gerar novo access token usando refresh token
     """
     return await user_service.use_refresh_token(user)
 
