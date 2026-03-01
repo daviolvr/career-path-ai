@@ -1,9 +1,8 @@
-from fastapi import APIRouter, UploadFile, File, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Query
 
-from app.models.user import User
 from app.schemas.resume_analysis_schema import ResumeAnalysisResponse, ResumeAnalysisListResponse, ResumeAnalysisDeleteResponse
-from app.api.v1.dependencies.security import verify_token
 from app.api.v1.dependencies.services import ResumeAnalysisServiceDep
+from app.api.v1.dependencies.auth import CurrentUser
 
 
 router = APIRouter()
@@ -12,8 +11,8 @@ router = APIRouter()
 @router.post("/", response_model=ResumeAnalysisResponse)
 async def analyze_resume(
     resume_analysis_service: ResumeAnalysisServiceDep,
+    current_user: CurrentUser,
     file: UploadFile = File(...),
-    current_user: User = Depends(verify_token),
 ):
     """
     Faz análise do resumo enviado em .pdf e retorna para o usuário.
@@ -26,7 +25,7 @@ async def analyze_resume(
 @router.get("/", response_model=ResumeAnalysisListResponse)
 async def get_my_resume_analyses(
     resume_analysis_service: ResumeAnalysisServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
     skip: int = Query(0, ge=0, description="Número de itens para pular"),
     limit: int = Query(100, ge=1, le=100, description="Número máximo de itens por página")
 ):
@@ -42,7 +41,7 @@ async def get_my_resume_analyses(
 async def get_resume_analysis(
     analysis_id: int,
     resume_analysis_service: ResumeAnalysisServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Retorna uma análise específica do usuário.
@@ -56,7 +55,7 @@ async def get_resume_analysis(
 async def delete_resume_analysis(
     analysis_id: int,
     resume_analysis_service: ResumeAnalysisServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Deleta uma análise de currículo do usuário.

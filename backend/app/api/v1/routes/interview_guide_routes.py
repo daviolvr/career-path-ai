@@ -1,18 +1,19 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Form, Query
 
-from app.models.user import User
 from app.schemas.interview_guide_schema import InterviewGuideResponse, InterviewGuideListResponse, InterviewGuideDeleteResponse
-from app.api.v1.dependencies.security import verify_token
 from app.api.v1.dependencies.services import InterviewGuideServiceDep
+from app.api.v1.dependencies.auth import CurrentUser
+
+
 router = APIRouter()
 
 
 @router.post("/", response_model=InterviewGuideResponse)
 async def generate_interview_guide(
     interview_guide_service: InterviewGuideServiceDep,
+    current_user: CurrentUser,
     file: UploadFile = File(...),
     job_description: str = Form(...),
-    current_user: User = Depends(verify_token),
 ):
     """
     Gera um roteiro detalhado para entrevista baseado no currículo e descrição da vaga
@@ -25,7 +26,7 @@ async def generate_interview_guide(
 @router.get("/", response_model=InterviewGuideListResponse)
 async def get_my_interview_guides(
     interview_guide_service: InterviewGuideServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
     skip: int = Query(0, ge=0, description="Número de itens para pular"),
     limit: int = Query(100, ge=1, le=100, description="Número máximo de itens por página"),
 ):
@@ -41,7 +42,7 @@ async def get_my_interview_guides(
 async def get_interview_guide(
     interview_guide_id: int,
     interview_guide_service: InterviewGuideServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Retorna um guia de entrevista específico do usuário.
@@ -55,7 +56,7 @@ async def get_interview_guide(
 async def delete_interview_guide(
     interview_guide_id: int,
     interview_guide_service: InterviewGuideServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Deleta um guia de entrevista do usuário.

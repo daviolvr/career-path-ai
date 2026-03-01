@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from app.schemas.user_schema import (
     MessageResponse,
@@ -7,9 +7,8 @@ from app.schemas.user_schema import (
     UserDeleteRequest,
     UserGetResponse
 )
-from app.models.user import User
-from app.api.v1.dependencies.security import verify_token
 from app.api.v1.dependencies.services import UserServiceDep
+from app.api.v1.dependencies.auth import CurrentUser
 
 
 router = APIRouter()
@@ -19,7 +18,7 @@ router = APIRouter()
 async def update_user_data(
     user_data: UserUpdateRequest,
     user_service: UserServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Atualiza os dados do usuário.
@@ -31,7 +30,7 @@ async def update_user_data(
 async def delete(
     user_data: UserDeleteRequest,
     user_service: UserServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Deleta o usuário.
@@ -42,7 +41,7 @@ async def delete(
 @router.get("/me", response_model=UserGetResponse)
 async def get_user_data(
     user_service: UserServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Retorna os dados do usuário.

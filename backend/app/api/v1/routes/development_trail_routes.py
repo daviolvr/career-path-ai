@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from app.schemas.development_trail_schema import (
     DevelopmentTrailRequest,
@@ -8,9 +8,8 @@ from app.schemas.development_trail_schema import (
     DevelopmentTrailDeleteResponse,
 )
 from app.utils.development_trail_utils import create_adaptive_development_trail_prompt
-from app.models.user import User
-from app.api.v1.dependencies.security import verify_token
 from app.api.v1.dependencies.services import DevelopmentTrailServiceDep
+from app.api.v1.dependencies.auth import CurrentUser
 
 
 router = APIRouter()
@@ -20,7 +19,7 @@ router = APIRouter()
 async def generate_development_trail(
     user_data: DevelopmentTrailRequest,
     development_trail_service: DevelopmentTrailServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Recebe dados do usuário e retorna trilha de desenvolvimento personalizada.
@@ -31,7 +30,7 @@ async def generate_development_trail(
 
 
 @router.get("/test-prompt")
-async def test_prompt_structure(current_user: User = Depends(verify_token)):
+async def test_prompt_structure(current_user: CurrentUser):
     """Endpoint para testar a estrutura do prompt (apenas desenvolvimento)"""
     test_data = DevelopmentTrailRequest(
         name="João Teste",
@@ -61,7 +60,7 @@ async def test_prompt_structure(current_user: User = Depends(verify_token)):
 @router.get("/", response_model=DevelopmentTrailListResponse)
 async def get_my_development_trails(
     development_trail_service: DevelopmentTrailServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
     skip: int = Query(0, ge=0, description="Número de itens para pular"),
     limit: int = Query(
         100, ge=1, le=100, description="Número máximo de itens por página"
@@ -81,7 +80,7 @@ async def get_my_development_trails(
 async def get_development_trail(
     development_trail_id: int,
     development_trail_service: DevelopmentTrailServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Retorna uma trilha de desenvolvimento específica do usuário
@@ -98,7 +97,7 @@ async def update_development_trail(
     development_trail_id: int,
     update_data: DevelopmentTrailUpdateRequest,
     development_trail_service: DevelopmentTrailServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Atualiza o status de uma trilha de desenvolvimento.
@@ -115,7 +114,7 @@ async def update_development_trail(
 async def delete_development_trail(
     development_trail_id: int,
     development_trail_service: DevelopmentTrailServiceDep,
-    current_user: User = Depends(verify_token),
+    current_user: CurrentUser,
 ):
     """
     Deleta uma trilha de desenvolvimento do usuário.
