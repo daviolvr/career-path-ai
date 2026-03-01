@@ -7,15 +7,15 @@ from app.schemas.user_schema import (
     UserGetResponse
 )
 from app.services.user_services import UserService
-from app.dependencies.security import verify_token
+from app.api.v1.dependencies.security import verify_token
 from app.models.user import User
-from app.dependencies.services import get_user_service
+from app.api.v1.dependencies.services import get_user_service
 
 
-user_router = APIRouter(prefix="/api/v1/users", tags=["users"])
+router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
-@user_router.patch("/me", response_model=UserUpdateResponse)
+@router.patch("/me", response_model=UserUpdateResponse)
 async def update_user_data(
     user_data: UserUpdateRequest,
     current_user: User = Depends(verify_token),
@@ -27,7 +27,7 @@ async def update_user_data(
     return await user_service.update_user(user_data, current_user)
 
 
-@user_router.delete("/me/delete", response_model=MessageResponse)
+@router.delete("/me/delete", response_model=MessageResponse)
 async def delete(
     user_data: UserDeleteRequest,
     current_user: User = Depends(verify_token),
@@ -39,7 +39,7 @@ async def delete(
     return await user_service.delete_user(user_data, current_user)
 
 
-@user_router.get("/me", response_model=UserGetResponse)
+@router.get("/me", response_model=UserGetResponse)
 async def get_user_data(
     current_user: User = Depends(verify_token),
     user_service: UserService = Depends(get_user_service),

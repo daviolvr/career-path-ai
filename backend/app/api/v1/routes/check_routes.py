@@ -3,9 +3,9 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 import google.generativeai as genai
 
-check_router = APIRouter(prefix="/api/v1/check", tags=["check"])
+router = APIRouter(prefix="/api/v1/check", tags=["check"])
 
-@check_router.get("/models")
+@router.get("/models")
 async def list_models():
     """Lista todos os modelos Gemini disponíveis"""
     try:
@@ -22,7 +22,7 @@ async def list_models():
         return JSONResponse({"error": str(e)})
     
 
-@check_router.get("/")
+@router.get("/")
 async def healthcheck():
     """
     Rota para fazer o healthcheck e obter informações gerais da API.

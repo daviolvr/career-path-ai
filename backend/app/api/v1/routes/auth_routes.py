@@ -16,10 +16,10 @@ from app.services.user_services import UserService
 from app.api.v1.dependencies.services import get_user_service
 
 
-auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
-@auth_router.post("/register", response_model=MessageResponse, status_code=201)
+@router.post("/register", response_model=MessageResponse, status_code=201)
 async def create_account(
     user_data: RegisterRequest, user_service: UserService = Depends(get_user_service)
 ):
@@ -29,7 +29,7 @@ async def create_account(
     return await user_service.create_user_account(user_data)
 
 
-@auth_router.post("/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(login_schema: LoginRequest, user_service: UserService = Depends(get_user_service)):
     """
     Autentica usuários no sistema.
@@ -37,12 +37,12 @@ async def login(login_schema: LoginRequest, user_service: UserService = Depends(
     return await user_service.login(login_schema)
 
 
-@auth_router.post("/login-form", response_model=TokenResponse)
+@router.post("/login-form", response_model=TokenResponse)
 async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), user_service: UserService = Depends(get_user_service)):
     return await user_service.login_form(form_data)
 
 
-@auth_router.post("/refresh", response_model=RefreshTokenResponse)
+@router.post("/refresh", response_model=RefreshTokenResponse)
 async def use_refresh_token(
     user: User = Depends(verify_refresh_token),
     user_service: UserService = Depends(get_user_service)
@@ -53,7 +53,7 @@ async def use_refresh_token(
     return await user_service.use_refresh_token(user)
 
 
-@auth_router.post("/logout", response_model=MessageResponse)
+@router.post("/logout", response_model=MessageResponse)
 async def logout(
     request: Request,
     current_user: User = Depends(verify_token),
@@ -65,12 +65,12 @@ async def logout(
     return await user_service.logout(request, current_user)
 
 
-@auth_router.post("/forgot-password", response_model=MessageResponse)
+@router.post("/forgot-password", response_model=MessageResponse)
 async def forgot_password(request_data: ForgotPasswordRequest, background_tasks: BackgroundTasks, user_service: UserService = Depends(get_user_service)):
     return await user_service.forgot_user_password(request_data, background_tasks)
 
 
-@auth_router.post("/reset-password", response_model=MessageResponse)
+@router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(request_data: ResetPasswordRequest, user_service: UserService = Depends(get_user_service)):
     """
     Reseta a senha do usuário.

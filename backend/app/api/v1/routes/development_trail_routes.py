@@ -9,14 +9,14 @@ from app.schemas.development_trail_schema import (
 from app.services.development_trail_services import DevelopmentTrailService
 from app.utils.development_trail_utils import create_adaptive_development_trail_prompt
 from app.models.user import User
-from app.dependencies.security import verify_token
-from app.dependencies.services import get_development_trail_service
+from app.api.v1.dependencies.security import verify_token
+from app.api.v1.dependencies.services import get_development_trail_service
 
 
-development_trail_router = APIRouter(prefix="/api/v1/development-trail", tags=["development-trail"])
+router = APIRouter(prefix="/api/v1/development-trail", tags=["development-trail"])
 
 
-@development_trail_router.post("/", response_model=DevelopmentTrailResponse)
+@router.post("/", response_model=DevelopmentTrailResponse)
 async def generate_development_trail(
     user_data: DevelopmentTrailRequest,
     current_user: User = Depends(verify_token),
@@ -31,7 +31,7 @@ async def generate_development_trail(
     return development_trail
 
 
-@development_trail_router.get("/test-prompt")
+@router.get("/test-prompt")
 async def test_prompt_structure(current_user: User = Depends(verify_token)):
     """Endpoint para testar a estrutura do prompt (apenas desenvolvimento)"""
     test_data = DevelopmentTrailRequest(
@@ -59,7 +59,7 @@ async def test_prompt_structure(current_user: User = Depends(verify_token)):
     }
 
 
-@development_trail_router.get("/", response_model=DevelopmentTrailListResponse)
+@router.get("/", response_model=DevelopmentTrailListResponse)
 async def get_my_development_trails(
     current_user: User = Depends(verify_token),
     skip: int = Query(0, ge=0, description="Número de itens para pular"),
@@ -77,7 +77,7 @@ async def get_my_development_trails(
     return development_trails
 
 
-@development_trail_router.get(
+@router.get(
     "/{development_trail_id}", response_model=DevelopmentTrailResponse
 )
 async def get_development_trail(
@@ -94,7 +94,7 @@ async def get_development_trail(
     return development_trail
 
 
-@development_trail_router.patch(
+@router.patch(
     "/{development_trail_id}", response_model=DevelopmentTrailResponse
 )
 async def update_development_trail(
@@ -113,7 +113,7 @@ async def update_development_trail(
     return development_trail
 
 
-@development_trail_router.delete(
+@router.delete(
     "/{development_trail_id}", response_model=DevelopmentTrailDeleteResponse
 )
 async def delete_development_trail(

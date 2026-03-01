@@ -1,15 +1,15 @@
 from fastapi import APIRouter, UploadFile, File, Depends, Query
 from app.models.user import User
 from app.services.resume_analysis_services import ResumeAnalysisService
-from app.dependencies.security import verify_token
+from app.api.v1.dependencies.security import verify_token
 from app.schemas.resume_analysis_schema import ResumeAnalysisResponse, ResumeAnalysisListResponse, ResumeAnalysisDeleteResponse
-from app.dependencies.services import get_resume_analysis_service
+from app.api.v1.dependencies.services import get_resume_analysis_service
 
 
-analyze_resume_router = APIRouter(prefix="/api/v1/analyze-resume", tags=["resume-analysis"])
+router = APIRouter(prefix="/api/v1/analyze-resume", tags=["resume-analysis"])
 
 
-@analyze_resume_router.post("/", response_model=ResumeAnalysisResponse)
+@router.post("/", response_model=ResumeAnalysisResponse)
 async def analyze_resume(
     file: UploadFile = File(...),
     current_user: User = Depends(verify_token),
@@ -24,7 +24,7 @@ async def analyze_resume(
     return resume_analysis
 
 
-@analyze_resume_router.get("/", response_model=ResumeAnalysisListResponse)
+@router.get("/", response_model=ResumeAnalysisListResponse)
 async def get_my_resume_analyses(
     current_user: User = Depends(verify_token),
     resume_analysis_service: ResumeAnalysisService = Depends(get_resume_analysis_service),
@@ -40,7 +40,7 @@ async def get_my_resume_analyses(
     return analyses
     
 
-@analyze_resume_router.get("/{analysis_id}", response_model=ResumeAnalysisResponse)
+@router.get("/{analysis_id}", response_model=ResumeAnalysisResponse)
 async def get_resume_analysis(
     analysis_id: int,
     current_user: User = Depends(verify_token),
@@ -55,7 +55,7 @@ async def get_resume_analysis(
     return analysis
 
 
-@analyze_resume_router.delete("/{analysis_id}", response_model=ResumeAnalysisDeleteResponse)
+@router.delete("/{analysis_id}", response_model=ResumeAnalysisDeleteResponse)
 async def delete_resume_analysis(
     analysis_id: int,
     current_user: User = Depends(verify_token),
