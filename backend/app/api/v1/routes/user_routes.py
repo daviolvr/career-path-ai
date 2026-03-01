@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+
 from app.schemas.user_schema import (
     MessageResponse,
     UserUpdateRequest,
@@ -6,20 +7,19 @@ from app.schemas.user_schema import (
     UserDeleteRequest,
     UserGetResponse
 )
-from app.services.user_services import UserService
-from app.api.v1.dependencies.security import verify_token
 from app.models.user import User
-from app.api.v1.dependencies.services import get_user_service
+from app.api.v1.dependencies.security import verify_token
+from app.api.v1.dependencies.services import UserServiceDep
 
 
-router = APIRouter(prefix="/api/v1/users", tags=["users"])
+router = APIRouter()
 
 
 @router.patch("/me", response_model=UserUpdateResponse)
 async def update_user_data(
     user_data: UserUpdateRequest,
+    user_service: UserServiceDep,
     current_user: User = Depends(verify_token),
-    user_service: UserService = Depends(get_user_service),
 ):
     """
     Atualiza os dados do usuário.
@@ -30,8 +30,8 @@ async def update_user_data(
 @router.delete("/me/delete", response_model=MessageResponse)
 async def delete(
     user_data: UserDeleteRequest,
+    user_service: UserServiceDep,
     current_user: User = Depends(verify_token),
-    user_service: UserService = Depends(get_user_service),
 ):
     """
     Deleta o usuário.
@@ -41,8 +41,8 @@ async def delete(
 
 @router.get("/me", response_model=UserGetResponse)
 async def get_user_data(
+    user_service: UserServiceDep,
     current_user: User = Depends(verify_token),
-    user_service: UserService = Depends(get_user_service),
 ):
     """
     Retorna os dados do usuário.

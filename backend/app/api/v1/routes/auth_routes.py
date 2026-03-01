@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
+
 from app.schemas.auth_schema import (
     RegisterRequest,
     LoginRequest, 
@@ -10,18 +11,17 @@ from app.schemas.auth_schema import (
     ResetPasswordRequest,
     LoginResponse,
 )
-from app.api.v1.dependencies.security import verify_token, verify_refresh_token
 from app.models.user import User
-from app.services.user_services import UserService
-from app.api.v1.dependencies.services import get_user_service
+from app.api.v1.dependencies.security import verify_token, verify_refresh_token
+from app.api.v1.dependencies.services import UserServiceDep
 
-
-router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+router = APIRouter()
 
 
 @router.post("/register", response_model=MessageResponse, status_code=201)
 async def create_account(
-    user_data: RegisterRequest, user_service: UserService = Depends(get_user_service)
+    user_data: RegisterRequest, 
+    user_service: UserServiceDep
 ):
     """
     Cria um novo usuário no banco de dados.
@@ -30,7 +30,10 @@ async def create_account(
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(login_schema: LoginRequest, user_service: UserService = Depends(get_user_service)):
+async def login(
+    login_schema: LoginRequest, 
+    user_service: UserServiceDep
+):
     """
     Autentica usuários no sistema.
     """
@@ -38,14 +41,17 @@ async def login(login_schema: LoginRequest, user_service: UserService = Depends(
 
 
 @router.post("/login-form", response_model=TokenResponse)
-async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), user_service: UserService = Depends(get_user_service)):
+async def login_form(
+    user_service: UserServiceDep, 
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
     return await user_service.login_form(form_data)
 
 
 @router.post("/refresh", response_model=RefreshTokenResponse)
 async def use_refresh_token(
+    user_service: UserServiceDep,
     user: User = Depends(verify_refresh_token),
-    user_service: UserService = Depends(get_user_service)
 ):
     """
     Rota para gerar novo access token usando refresh token
@@ -56,8 +62,8 @@ async def use_refresh_token(
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
     request: Request,
+    user_service: UserServiceDep,
     current_user: User = Depends(verify_token),
-    user_service: UserService = Depends(get_user_service)
 ):
     """
     Faz logout do usuário adicionando o token à blacklist
@@ -66,12 +72,19 @@ async def logout(
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(request_data: ForgotPasswordRequest, background_tasks: BackgroundTasks, user_service: UserService = Depends(get_user_service)):
+async def forgot_password(
+    request_data: ForgotPasswordRequest, 
+    background_tasks: BackgroundTasks, 
+    user_service: UserServiceDep
+):
     return await user_service.forgot_user_password(request_data, background_tasks)
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-async def reset_password(request_data: ResetPasswordRequest, user_service: UserService = Depends(get_user_service)):
+async def reset_password(
+    request_data: ResetPasswordRequest, 
+    user_service: UserServiceDep
+):
     """
     Reseta a senha do usuário.
     """

@@ -39,5 +39,5 @@ async def get_development_trail_service(
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 ResumeAnalysisServiceDep = Annotated[ResumeAnalysisService, Depends(get_resume_analysis_service)]
-InterviewGuideDep = Annotated[InterviewGuideService, Depends(get_interview_guide_service)]
+InterviewGuideServiceDep = Annotated[InterviewGuideService, Depends(get_interview_guide_service)]
 DevelopmentTrailServiceDep = Annotated[DevelopmentTrailService, Depends(get_development_trail_service)]
