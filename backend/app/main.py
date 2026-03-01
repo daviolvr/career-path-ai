@@ -1,15 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import os
+
 from app.core.config import settings
 from app.core.tasks import start_token_cleanup_scheduler, scheduler
-from app.routes.resume_analysis_routes import analyze_resume_router
-from app.routes.check_routes import check_router
-from app.routes.interview_guide_routes import interview_guide_router
-from app.routes.development_trail_routes import development_trail_router
-from app.routes.auth_routes import auth_router
-from app.routes.user_routes import user_router
-import os
+from app.core.exception_handlers import register_exception_handlers
+from app.api.v1.routes.resume_analysis_routes import analyze_resume_router
+from app.api.v1.routes.check_routes import check_router
+from app.api.v1.routes.interview_guide_routes import interview_guide_router
+from app.api.v1.routes.development_trail_routes import development_trail_router
+from app.api.v1.routes.auth_routes import auth_router
+from app.api.v1.routes.user_routes import user_router
 
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GRPC_POLL_STRATEGY"] = "poll"
@@ -44,6 +46,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_exception_handlers(app)
 
 app.include_router(check_router)
 app.include_router(analyze_resume_router)
