@@ -9,15 +9,13 @@ from app.schemas.resume_analysis_schema import (
 from app.utils.pdf_utils import check_pdf
 from app.repository.resume_analysis_repository import ResumeAnalysisRepository
 from app.core.logging_config import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 import traceback
 
 
 class ResumeAnalysisService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.resume_analysis_repository = ResumeAnalysisRepository(db)
+    def __init__(self, repository: ResumeAnalysisRepository):
+        self.repository = repository
 
     async def analyze_resume_service(
         self, file: UploadFile, current_user: User,
@@ -40,7 +38,7 @@ class ResumeAnalysisService:
                 logger.warning("Resultado da análise pode estar incompleto, mas prosseguindo...")
 
             # Salva no banco
-            resume_analysis = await self.resume_analysis_repository.create(
+            resume_analysis = await self.repository.create(
                 user_id=current_user.id,
                 original_filename=file.filename,
                 analysis_result=analysis_result,
@@ -76,7 +74,7 @@ class ResumeAnalysisService:
         Serviço para obter todas as análises de currículo do usuário
         """
         try:
-            analyses, total_count = await self.resume_analysis_repository.get_by_user_id(
+            analyses, total_count = await self.repository.get_by_user_id(
                 user_id=current_user.id,
                 skip=skip,
                 limit=limit
@@ -115,7 +113,7 @@ class ResumeAnalysisService:
         Serviço para obter uma análise de currículo específica do usuário
         """
         try:
-            analysis = await self.resume_analysis_repository.get_by_id_and_user_id(
+            analysis = await self.repository.get_by_id_and_user_id(
                 analysis_id=analysis_id,
                 user_id=current_user.id
             )
@@ -148,7 +146,7 @@ class ResumeAnalysisService:
         Serviço para deletar uma análise de currículo do usuário
         """
         try:
-            analysis = await self.resume_analysis_repository.get_by_id_and_user_id(
+            analysis = await self.repository.get_by_id_and_user_id(
                 analysis_id=analysis_id,
                 user_id=current_user.id
             )
@@ -159,7 +157,7 @@ class ResumeAnalysisService:
                     detail="Análise não encontrada"
                 )
             
-            await self.resume_analysis_repository.delete(analysis.id)
+            await self.repository.delete(analysis.id)
             
             await self.db.commit()
 

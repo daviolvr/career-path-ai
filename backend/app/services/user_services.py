@@ -1,5 +1,7 @@
 from fastapi import HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
+
 from app.models.user import User
 from app.core.security import bcrypt_context, create_token, add_token_to_blacklist
 from app.core.email import send_password_reset_email
@@ -21,26 +23,23 @@ from app.schemas.auth_schema import (
     LoginResponse,
     UserResponse,
 )
-from datetime import timedelta
 from app.repository.user_repository import UserRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.user_repository = UserRepository(db)
+    def __init__(self, repository: UserRepository):
+        self.repository = repository
 
     async def create_user_account(
         self, user_data: RegisterRequest
     ) -> MessageResponse:
         try:
-            if await self.user_repository.email_exists(user_data.email):
+            if await self.repository.email_exists(user_data.email):
                 raise HTTPException(status_code=400, detail="Esse email já está em uso")
 
             crypted_password = bcrypt_context.hash(user_data.password)
 
-            await self.user_repository.create(
+            await self.repository.create(
                 name=user_data.name,
                 email=user_data.email,
                 password_hash=crypted_password,
@@ -56,7 +55,7 @@ class UserService:
             )
 
     async def authenticate_user(self, email: str, password: str) -> User:
-        user = await self.user_repository.get_by_email(email)
+        user = await self.repository.get_by_email(email)
 
         if not user or not bcrypt_context.verify(password, user.password_hash):
             raise HTTPException(
@@ -120,7 +119,7 @@ class UserService:
                     status_code=400, detail="Pelo menos um campo deve ser fornecido"
                 )
 
-            email_exists = await self.user_repository.get_by_email(user_data.email)
+            email_exists = await self.repository.get_by_email(user_data.email)
             if email_exists:
                 raise HTTPException(
                     status_code=400,
@@ -129,7 +128,7 @@ class UserService:
             
             updated_data = user_data.model_dump(exclude_unset=True, exclude_none=True)
 
-            updated_user = await self.user_repository.update(
+            updated_user = await self.repository.update(
                 current_user.id, **updated_data
             )
 
@@ -151,7 +150,7 @@ class UserService:
             ):
                 raise HTTPException(status_code=400, detail="Senha incorreta")
 
-            await self.user_repository.delete(current_user.id)
+            await self.repository.delete(current_user.id)
 
             return MessageResponse(message="Usuário deletado com sucesso")
         except HTTPException:
@@ -163,7 +162,7 @@ class UserService:
 
     async def retrieve_user_data(self, current_user: User) -> UserGetResponse:
         try:
-            user = await self.user_repository.get_by_id(current_user.id)
+            user = await self.repository.get_by_id(current_user.id)
 
             if not user:
                 raise HTTPException(
@@ -188,7 +187,7 @@ class UserService:
         Recebe o email, busca usuário e envia email com token
         """
         try:
-            user = await self.user_repository.get_by_email(request_data.email)
+            user = await self.repository.get_by_email(request_data.email)
             if not user:
                 raise HTTPException(
                     status_code=400,
@@ -207,13 +206,13 @@ class UserService:
             if not email:
                 raise HTTPException(status_code=400, detail="Token inválido ou expirado")
 
-            user = await self.user_repository.get_by_email(email)
+            user = await self.repository.get_by_email(email)
             if not user:
                 raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
             hashed_password = bcrypt_context.hash(request_data.new_password)
 
-            await self.user_repository.update_password(user.id, hashed_password)
+            await self.repository.update_password(user.id, hashed_password)
 
             return MessageResponse(message="Senha resetada com sucesso")
         except HTTPException:

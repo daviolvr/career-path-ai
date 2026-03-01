@@ -9,14 +9,12 @@ from app.schemas.interview_guide_schema import (
 from app.utils.pdf_utils import check_pdf
 from app.repository.interview_guide_repository import InterviewGuideRepository
 from app.core.logging_config import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 
 
 class InterviewGuideService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.interview_guide_repository = InterviewGuideRepository(db)
+    def __init__(self, repository: InterviewGuideRepository):
+        self.repository = repository
 
     async def generate_interview_guide_service(self, file: UploadFile, job_description: str, current_user: User) -> InterviewGuideResponse:
         """
@@ -36,7 +34,7 @@ class InterviewGuideService:
             if not interview_guide_result.get("preparation_overview") and not interview_guide_result.get("technical_preparation"):
                 logger.warning("Resultado do guia pode estar incompleto, mas prosseguindo...")
 
-            interview_guide = await self.interview_guide_repository.create(
+            interview_guide = await self.repository.create(
                 user_id=current_user.id,
                 interview_guide=interview_guide_result,
                 created_at=datetime.now(timezone.utc)
@@ -67,7 +65,7 @@ class InterviewGuideService:
         Serviço para obter guias de entrevista do usuário
         """
         try:
-            interview_guides, total_count = await self.interview_guide_repository.get_by_user_id(
+            interview_guides, total_count = await self.repository.get_by_user_id(
                 user_id=current_user.id,
                 skip=skip,
                 limit=limit
@@ -91,7 +89,7 @@ class InterviewGuideService:
         Serviço para obter um guia de entrevista específico do usuário        
         """
         try:
-            interview_guide = await self.interview_guide_repository.get_by_id_and_user_id(
+            interview_guide = await self.repository.get_by_id_and_user_id(
                 interview_guide_id=interview_guide_id,
                 user_id=current_user.id
             )
@@ -124,7 +122,7 @@ class InterviewGuideService:
         Serviço para deletar um guia de entrevista do usuário
         """
         try:
-            interview_guide = await self.interview_guide_repository.get_by_id_and_user_id(
+            interview_guide = await self.repository.get_by_id_and_user_id(
                 interview_guide_id=interview_guide_id,
                 user_id=current_user.id
             )
@@ -135,7 +133,7 @@ class InterviewGuideService:
                     detail="Guia de entrevista não encontrado"
                 )
             
-            await self.interview_guide_repository.delete(interview_guide.id)
+            await self.repository.delete(interview_guide.id)
             await self.db.commit()
 
             return InterviewGuideDeleteResponse(

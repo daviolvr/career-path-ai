@@ -1,4 +1,8 @@
 from fastapi import HTTPException
+import google.generativeai as genai
+from google.api_core import exceptions as google_exceptions
+from datetime import datetime, timezone
+
 from app.utils.development_trail_utils import (
     create_adaptive_development_trail_prompt,
     extract_json_from_response,
@@ -14,17 +18,12 @@ from app.models.user import User
 from app.repository.development_trail_repository import DevelopmentTrailRepository
 from app.core.config import settings
 from app.core.logging_config import logger
-from sqlalchemy.ext.asyncio import AsyncSession
-import google.generativeai as genai
-from google.api_core import exceptions as google_exceptions
-from datetime import datetime, timezone
 from ..models.development_trail import DevelopmentTrailStatus
 
 
 class DevelopmentTrailService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.development_trail_repository = DevelopmentTrailRepository(db)
+    def __init__(self, repository: DevelopmentTrailRepository):
+        self.repository = repository
 
     async def generate_development_trail_with_gemini_service(
         self, user_data: DevelopmentTrailRequest, current_user: User
@@ -72,7 +71,7 @@ class DevelopmentTrailService:
             if not development_trail_result.get("user_profile_summary") and not development_trail_result.get("development_phases"):
                 logger.warning("Resultado da trilha pode estar incompleto, mas prosseguindo...")
 
-            development_trail = await self.development_trail_repository.create(
+            development_trail = await self.repository.create(
                 user_id=current_user.id,
                 development_trail=development_trail_result,
                 status=DevelopmentTrailStatus.IN_PROGRESS.value,
@@ -148,7 +147,7 @@ class DevelopmentTrailService:
         Serviço que retorna todas as trilhas de desenvolvimento do usuário
         """
         try:
-            development_trails, total_count = await self.development_trail_repository.get_by_user_id(
+            development_trails, total_count = await self.repository.get_by_user_id(
                 user_id=current_user.id,
                 skip=skip,
                 limit=limit
@@ -179,7 +178,7 @@ class DevelopmentTrailService:
         Serviço que retorna uma trilha de desenvolvimento específica do usuário
         """
         try:
-            development_trail = await self.development_trail_repository.get_by_id_and_user_id(
+            development_trail = await self.repository.get_by_id_and_user_id(
                 development_trail_id=development_trail_id,
                 user_id=current_user.id
             ) 
@@ -216,7 +215,7 @@ class DevelopmentTrailService:
         Serviço para atualizar o status de uma trilha de desenvolvimento
         """
         try:
-            development_trail = await self.development_trail_repository.get_by_id_and_user_id(
+            development_trail = await self.repository.get_by_id_and_user_id(
                 development_trail_id=development_trail_id,
                 user_id=current_user.id
             )
@@ -227,7 +226,7 @@ class DevelopmentTrailService:
                 )
 
             # Atualizar o status
-            updated_trail = await self.development_trail_repository.update_status(
+            updated_trail = await self.repository.update_status(
                 development_trail_id=development_trail_id,
                 status=update_data.status.value
             )
@@ -259,7 +258,7 @@ class DevelopmentTrailService:
         Serviço para deletar uma trilha de desenvolvimento do usuário
         """
         try:
-            development_trail = await self.development_trail_repository.get_by_id_and_user_id(
+            development_trail = await self.repository.get_by_id_and_user_id(
                 development_trail_id=development_trail_id,
                 user_id=current_user.id
             )
@@ -269,7 +268,7 @@ class DevelopmentTrailService:
                     status_code=404, detail="Trilha de desenvolvimento não encontrada"
                 )
             
-            await self.development_trail_repository.delete(development_trail_id)
+            await self.repository.delete(development_trail_id)
             await self.db.commit()
 
             return DevelopmentTrailDeleteResponse(
