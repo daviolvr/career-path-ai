@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.core.security import is_token_blacklisted
-from app.dependencies.database import get_db
+from app.api.v1.dependencies.database import get_db
 from app.utils.token_utils import decode_jwt_token
 from jose import JWTError
 from typing import Optional
