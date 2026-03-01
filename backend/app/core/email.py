@@ -1,12 +1,12 @@
 from fastapi import BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, MessageType
-from app.core.config import settings
+from app.core.config import settings, conf
 from app.models.user import User
 from app.utils.token_utils import create_reset_password_token 
 
 
 async def send_email(recipients: list, subject: str, context: dict, template_name: str, background_tasks: BackgroundTasks):
-    fm = FastMail(settings.conf)
+    fm = FastMail(conf)
 
     message = MessageSchema(
         subject=subject,

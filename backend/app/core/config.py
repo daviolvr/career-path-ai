@@ -1,49 +1,63 @@
-# app\core\config.py
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from fastapi_mail import ConnectionConfig
 from pathlib import Path
-import os
 
-load_dotenv()
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-
-class Settings:
-    APP_NAME: str = "CareerPath-AI"
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
-
-    FRONTEND_HOST: str = os.getenv("FRONTEND_HOST")
+    # App
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Career-Path-AI API"
+    FRONTEND_HOST: str
 
     # Database Configuration
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_DB = str
+    POSTGRES_HOST = str
+    POSTGRES_PORT = str
+    POSTGRES_USER = str
+    POSTGRES_PASSWORD = str
 
-    DATABASE_URL: str = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"  # Pro docker
+    @property
+    def DATABASE_URI(self) -> str:
+        return(
+            "postgresql+asyncpg://"
+            f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY")
-    ALGORITHM: str = os.getenv("ALGORITHM")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    SECRET_KEY: str 
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    DEBUG: bool
 
     # Email
-    conf = ConnectionConfig(
-        MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
-        MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
-        MAIL_FROM=os.getenv("MAIL_FROM", "noreply@example.com"),
-        MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-        MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-        MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True").lower() == "true",
-        MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False").lower() == "true",
-        USE_CREDENTIALS=os.getenv("USE_CREDENTIALS", "True").lower() == "true",
-        VALIDATE_CERTS=True,
-        TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates",
-    )
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
+    USE_CREDENTIALS: bool = True
+
     RESET_PASSWORD_TOKEN_EXPIRE_HOURS = 1
 
     # Gemini
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
+    GEMINI_API_KEY: str
 
 
 settings = Settings()
+
+conf = ConnectionConfig(
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=settings.MAIL_PORT,
+    MAIL_SERVER=settings.MAIL_SERVER,
+    MAIL_STARTTLS=settings.MAIL_STARTTLS,
+    MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
+    USE_CREDENTIALS=settings.USE_CREDENTIALS,
+    VALIDATE_CERTS=True,
+    TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates",
+)
