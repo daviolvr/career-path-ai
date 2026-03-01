@@ -10,10 +10,10 @@ from app.schemas.auth_schema import (
     ResetPasswordRequest,
     LoginResponse,
 )
-from app.dependencies.security import verify_token, verify_refresh_token
+from app.api.v1.dependencies.security import verify_token, verify_refresh_token
 from app.models.user import User
 from app.services.user_services import UserService
-from app.dependencies.services import get_user_service
+from app.api.v1.dependencies.services import get_user_service
 
 
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
