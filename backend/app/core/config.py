@@ -11,7 +11,7 @@ class Settings:
     APP_NAME: str = "CareerPath-AI"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
-    FRONTEND_HOST: str = os.getenv("FRONTEND_HOST")
+    FRONTEND_HOST: str = os.getenv("FRONTEND_HOST", "http://localhost:5173")
 
     # Database Configuration
     POSTGRES_DB = os.getenv("POSTGRES_DB")
@@ -20,12 +20,14 @@ class Settings:
     POSTGRES_USER = os.getenv("POSTGRES_USER")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
-    DATABASE_URL: str = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"  # Pro docker
+    DATABASE_URL: str = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    DATABASE_URI: str = DATABASE_URL
 
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY")
+    FORGET_PWD_SECRET_KEY: str = os.getenv("FORGET_PWD_SECRET_KEY", os.getenv("SECRET_KEY", ""))
     ALGORITHM: str = os.getenv("ALGORITHM")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
     # Email
     conf = ConnectionConfig(
@@ -40,7 +42,7 @@ class Settings:
         VALIDATE_CERTS=True,
         TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates",
     )
-    RESET_PASSWORD_TOKEN_EXPIRE_HOURS = 1
+    RESET_PASSWORD_TOKEN_EXPIRE_HOURS = int(os.getenv("RESET_PASSWORD_TOKEN_EXPIRE_HOURS", "1"))
 
     # Gemini
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
