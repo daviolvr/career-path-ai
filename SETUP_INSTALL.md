@@ -37,6 +37,7 @@ Após os containers iniciarem (pode levar alguns minutos na primeira vez), acess
 - **Backend API**: http://localhost:8000
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+- **PostgreSQL (host)**: localhost:5434
 
 ## 📁 Estrutura de Arquivos de Configuração
 
@@ -116,7 +117,7 @@ docker compose exec backend sh
 docker compose exec frontend sh
 
 # PostgreSQL
-docker compose exec postgres psql -U careerpath_user -d careerpath_db
+docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
 ## 🔧 Troubleshooting
@@ -144,7 +145,7 @@ docker compose exec postgres psql -U careerpath_user -d careerpath_db
 
 ### Erro: "Port already in use"
 
-**Problema**: Porta 8000, 5173 ou 5432 já está em uso.
+**Problema**: Porta 8000, 5173 ou 5434 já está em uso.
 
 **Solução**:
 1. Pare o serviço que está usando a porta

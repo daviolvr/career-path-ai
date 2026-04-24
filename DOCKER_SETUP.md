@@ -107,7 +107,7 @@ Após iniciar os containers, acesse:
 - **Backend API**: http://localhost:8000
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-- **PostgreSQL**: localhost:5432
+- **PostgreSQL (host)**: localhost:5434
 
 ## Estrutura dos Serviços
 
@@ -124,7 +124,8 @@ Após iniciar os containers, acesse:
 
 ### PostgreSQL
 - **Container**: `career-path-postgres`
-- **Porta**: 5432
+- **Porta (host)**: 5434
+- **Porta (rede Docker interna)**: 5432
 - **Versão**: PostgreSQL 17
 - **Volume**: `postgres_data` (persiste dados)
 - **Healthcheck**: Configurado para aguardar o banco estar pronto
@@ -171,7 +172,7 @@ docker compose exec backend sh
 docker compose exec frontend sh
 
 # PostgreSQL
-docker compose exec postgres psql -U careerpath_user -d careerpath_db
+docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
 ## Desenvolvimento

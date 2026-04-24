@@ -40,8 +40,8 @@ cp .env.example .env.docker
 #### 5. Edite o .env.docker
 ```env
 POSTGRES_DB=
-POSTGRES_HOST=
-POSTGRES_PORT=
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 
@@ -74,6 +74,7 @@ docker compose up --build
 - **Swagger UI: http://localhost:8000/docs
 - **Redoc: http://localhost:8000/redoc
 - **FrontEnd: http://localhost:5173/login
+- **PostgreSQL (host): localhost:5434
 
 ## Funcionalidades
 - ✅ Extração de texto de PDFs

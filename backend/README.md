@@ -27,8 +27,8 @@ cp .env.example .env.docker
 #### 3. Edite o arquivo .env.docker
 ```env
 POSTGRES_DB=seu_banco
-POSTGRES_HOST=career-path-postgres
-POSTGRES_PORT=5433
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
 POSTGRES_USER=seu_user
 POSTGRES_PASSWORD=sua_senha
 
@@ -38,6 +38,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 GEMINI_API_KEY=sua_chave_api_gemini_aqui
 ```
+
+Obs.: para acessar o PostgreSQL a partir da máquina host (fora dos containers), use `localhost:5434`.
 
 #### 4. Execute a aplicação
 ```bash

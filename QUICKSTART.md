@@ -24,7 +24,7 @@ Se você já tem o arquivo `backend/.env` configurado:
 
 2. **Criar `backend/.env.docker`:**
    ```bash
-   cp backend/.env.docker.example backend/.env.docker
+   cp backend/.env.example backend/.env.docker
    # IMPORTANTE: Altere POSTGRES_HOST para "postgres" (nome do serviço Docker)
    ```
 
@@ -40,6 +40,7 @@ Após iniciar os containers:
 - **Frontend**: http://localhost:5173/login
 - **Backend API**: http://localhost:8000
 - **Swagger UI**: http://localhost:8000/docs
+- **PostgreSQL (host)**: localhost:5434
 
 ## 📚 Documentação Completa
 
