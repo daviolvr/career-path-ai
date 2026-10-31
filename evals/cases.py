@@ -22,6 +22,7 @@ class EvalCase:
     expected_levels: tuple[str, ...]
     job_keywords: tuple[str, ...]  # o guia deve tocar em ao menos uma
     forbidden_terms: tuple[str, ...] = field(default_factory=tuple)  # nunca podem aparecer na saída
+    interest_keywords: tuple[str, ...] = field(default_factory=tuple)
 
 
 CASES = [
@@ -165,5 +166,6 @@ CASES = [
         absent_skills=("Kubernetes", "Rust", "Java", "AWS", "Docker"),
         expected_levels=("Júnior",),
         job_keywords=("software", "desenvolvimento"),
+        interest_keywords=("tecnologia",),
     ),
 ]

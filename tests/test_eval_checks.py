@@ -115,6 +115,44 @@ def test_trail_check_phase_count_availability_and_interest():
     assert outcome["repete_disponibilidade"] is False
 
 
+def trail_mentioning(text):
+    out = portuguese(sample_output(DevelopmentTrailOutput))
+    out["career_tips"] = [text]
+    return out
+
+
+def test_interest_keywords_replace_the_literal_goal():
+    """Objetivo em texto livre não reaparece palavra por palavra: o caso declara a palavra que importa."""
+    sparse = next(c for c in CASES if c.name == "sparse_input")
+    assert sparse.trail.professional_goal == "Trabalhar com tecnologia"
+
+    paraphrase = trail_mentioning(
+        "Quem busca ingressar na área de tecnologia deve começar pelo básico"
+    )
+    unrelated = trail_mentioning("Descanse bastante e mantenha uma rotina de estudos")
+
+    assert results(check_trail(sparse, paraphrase))["cita_interesse_do_usuario"] is True
+    assert results(check_trail(sparse, unrelated))["cita_interesse_do_usuario"] is False
+
+
+def test_interest_falls_back_to_the_requested_technologies_without_keywords():
+    case = next(c for c in CASES if c.name == "junior_backend")
+    assert not case.interest_keywords
+
+    assert (
+        results(check_trail(case, trail_mentioning("Foque em Back-End")))[
+            "cita_interesse_do_usuario"
+        ]
+        is True
+    )
+    assert (
+        results(check_trail(case, trail_mentioning("Foque em outra coisa")))[
+            "cita_interesse_do_usuario"
+        ]
+        is False
+    )
+
+
 def test_empty_strings_are_flagged():
     out = portuguese(sample_output(ResumeAnalysisOutput))
     out["market_insights"] = "  "

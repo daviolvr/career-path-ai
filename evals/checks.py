@@ -74,7 +74,9 @@ def _common(case: EvalCase, out: dict) -> list[tuple[str, tuple[bool, str]]]:
 
 def check_trail(case: EvalCase, out: dict) -> list[tuple[str, tuple[bool, str]]]:
     phases = out["development_phases"]
-    interests = tuple(case.trail.interested_technologies or [case.trail.professional_goal])
+    interests = case.interest_keywords or tuple(
+        case.trail.interested_technologies or [case.trail.professional_goal]
+    )
     availability = case.trail.available_time_week
     adaptation = out["study_plan_adaptation"]["for_busy_schedule"]
     return _common(case, out) + [
