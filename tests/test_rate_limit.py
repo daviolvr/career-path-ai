@@ -1,8 +1,8 @@
 """Rate limit: política por rota, chaves, falha do Redis e resposta 429 no envelope padrão."""
 
 import asyncio
-import logging
 import hashlib
+import logging
 
 import pytest
 from fastapi import Depends, FastAPI
