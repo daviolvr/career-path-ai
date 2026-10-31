@@ -1,6 +1,7 @@
 """Rate limit: política por rota, chaves, falha do Redis e resposta 429 no envelope padrão."""
 
 import asyncio
+import logging
 import hashlib
 
 import pytest
@@ -78,8 +79,16 @@ def test_keys_and_namespaces_are_independent():
     run(scenario())
 
 
-def test_storage_failure_fails_open_by_default():
-    run(RateLimiter(BrokenStorage()).hit("login", "1/minute", "k"))  # não levanta
+def test_storage_failure_fails_open_by_default(caplog):
+    storage = BrokenStorage()
+
+    with caplog.at_level(logging.ERROR, logger="app"):
+        run(RateLimiter(storage).hit("login", "1/minute", "k"))  # não levanta
+
+    # Passar e falhar devolvem o mesmo `None`: o erro registrado é o que prova que o
+    # armazenamento falhou e que a requisição só foi liberada por ser fail-open.
+    assert storage.calls == 1
+    assert "Rate limiter indisponível (login)" in caplog.text
 
 
 def test_storage_failure_fails_closed_when_requested():

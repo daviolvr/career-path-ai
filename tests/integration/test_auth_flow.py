@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
-from app.security.tokens import TokenType, create_token
 from tests.fakes import unverified_claims
 from tests.integration.conftest import API, CREDENTIALS, bearer
 
@@ -80,10 +79,25 @@ def test_access_token_cannot_renew_the_session(http, session_tokens):
     assert response.status_code == 401
 
 
-def test_expired_refresh_token_cannot_renew_the_session(http, session_tokens):
-    expired = create_token(1, "hash", TokenType.REFRESH, token_duration=timedelta(seconds=-5))
+def resigned(token, **claims):
+    """O mesmo token, com claims trocadas e a assinatura refeita: só o que mudou pode recusá-lo."""
+    payload = {**jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]), **claims}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-    assert http.post(f"{API}/auth/refresh", headers=bearer(expired)).status_code == 401
+
+def test_expired_refresh_token_cannot_renew_the_session(http, session_tokens):
+    """O token expirado é o refresh real da sessão (mesmo usuário, senha e jti), só com `exp` no
+    passado: a expiração é o único motivo possível para o 401. A contraprova, com `exp` no futuro,
+    prova que o token só estava fora do prazo."""
+    refresh = session_tokens["refresh_token"]
+    past = int((datetime.now(UTC) - timedelta(seconds=5)).timestamp())
+    future = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
+
+    expired = http.post(f"{API}/auth/refresh", headers=bearer(resigned(refresh, exp=past)))
+    still_valid = http.post(f"{API}/auth/refresh", headers=bearer(resigned(refresh, exp=future)))
+
+    assert expired.status_code == 401
+    assert still_valid.status_code == 200
 
 
 def test_logged_out_access_token_is_rejected(http, session_tokens):
@@ -263,6 +277,11 @@ def test_the_emailed_link_resets_the_password(http, session_tokens, outbox):
     )
 
     assert reset.status_code == 200
+    # O link só prova algo se a senha realmente mudou: a nova entra e a antiga não.
+    new_login = http.post(f"{API}/auth/login", json={**CREDENTIALS, "password": "Newpass12"})
+    old_login = http.post(f"{API}/auth/login", json=CREDENTIALS)
+    assert new_login.status_code == 200
+    assert old_login.status_code == 401
 
 
 def test_login_error_is_the_same_for_unknown_account_and_wrong_password(http, session_tokens):
