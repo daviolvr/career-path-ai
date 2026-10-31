@@ -63,6 +63,9 @@ jobs:
       - name: Testes (unitários e de integração)
         run: uv run pytest -q
 
+      - name: Avaliação da IA (dry-run, sem chamadas)
+        run: uv run python -m evals.run_eval --dry-run
+
   docker:
     name: API (build da imagem)
     runs-on: ubuntu-latest

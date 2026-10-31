@@ -7,7 +7,6 @@ services:
     ports:
       # Só a própria máquina alcança a porta publicada (sem 127.0.0.1 ela abriria na rede local).
       - "127.0.0.1:8000:8000"
-    # Toda a configuração vem de um único .env (veja .env.example).
     env_file:
       - .env
     environment:
@@ -74,7 +73,6 @@ services:
       context: ../career-path-ai-web
       dockerfile: docker/Dockerfile
       args:
-        # O navegador (no host) fala com a API pela porta publicada acima.
         VITE_API_URL: http://localhost:8000
     ports:
       - "127.0.0.1:5173:8080"
