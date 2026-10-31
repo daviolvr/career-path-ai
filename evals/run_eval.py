@@ -4,9 +4,12 @@ Uso (a partir da raiz do repositório):
     python -m evals.run_eval --dry-run
     python -m evals.run_eval --env-file .env [--reps 2] [--cases junior_backend,sparse_input]
                              [--model gemini-2.5-flash] [--thinking-budget 0]
+                             [--resume evals/results/<arquivo>.json]
 
 Chama o mesmo caminho dos serviços (builder de prompt -> GeminiClient -> schema) e aplica
 os critérios de evals/checks.py. Os resultados completos vão para evals/results/ (ignorado pelo git).
+Com --resume, só roda o que ainda não tem resposta no resultado anterior (por exemplo, depois de a
+cota do dia acabar) e grava um arquivo novo com os registros antigos e os novos.
 A chave nunca é impressa.
 """
 
@@ -22,7 +25,7 @@ from pathlib import Path
 
 # Importar os builders carrega as settings da API; esta avaliação só precisa da chave do Gemini.
 for _key, _value in {
-    "FRONTEND_HOST": "x",
+    "FRONTEND_HOST": "http://localhost:5173",
     "POSTGRES_DB": "x",
     "POSTGRES_HOST": "x",
     "POSTGRES_PORT": "1",
@@ -80,6 +83,39 @@ USE_CASES = {
         check_resume,
     ),
 }
+
+
+def answered_counts(records: list[dict]) -> dict[tuple[str, str], int]:
+    """Quantas chamadas de cada (uso, caso) tiveram resposta. Falha de cota, timeout ou provedor
+    não conta: não diz nada sobre a saída e precisa ser refeita."""
+    counts: dict[tuple[str, str], int] = defaultdict(int)
+    for record in records:
+        if record.get("error") not in INFRA_ERRORS:
+            counts[(record["use_case"], record["case"])] += 1
+    return counts
+
+
+def plan_calls(cases, reps: int, previous: list[dict] | None = None) -> list[tuple[str, object]]:
+    """Chamadas a fazer: `reps` por (caso, uso), descontadas as que já tiveram resposta."""
+    answered = answered_counts(previous or [])
+    return [
+        (use_case, case)
+        for case in cases
+        for use_case in USE_CASES
+        for _ in range(max(0, reps - answered[(use_case, case.name)]))
+    ]
+
+
+def load_previous(path: str, model: str, thinking_budget: int) -> list[dict]:
+    """Registros de um resultado anterior. Misturar modelos ou configurações de raciocínio
+    produziria um resumo que não mede nada, então a retomada exige a mesma configuração."""
+    data = json.loads(Path(path).read_text())
+    if (data["model"], data["thinking_budget"]) != (model, thinking_budget):
+        raise SystemExit(
+            f"--resume: {path} foi gerado com {data['model']} (thinking {data['thinking_budget']}), "
+            f"mas esta execução usa {model} (thinking {thinking_budget})."
+        )
+    return data["records"]
 
 
 async def run_one(client: GeminiClient, use_case: str, case) -> dict:
@@ -156,9 +192,12 @@ def summarize(records: list[dict]) -> str:
 
 async def main_async(args) -> int:
     selected = [c for c in CASES if not args.cases or c.name in args.cases.split(",")]
-    plan = [(u, c) for c in selected for u in USE_CASES for _ in range(args.reps)]
+    previous = load_previous(args.resume, args.model, args.thinking_budget) if args.resume else []
+    plan = plan_calls(selected, args.reps, previous)
     print(
-        f"{len(plan)} chamadas planejadas ({len(selected)} casos x {len(USE_CASES)} usos x {args.reps} repetições)"
+        f"{len(plan)} chamadas planejadas ({len(selected)} casos x {len(USE_CASES)} usos x {args.reps} repetições"
+        + (f", descontadas as já respondidas em {args.resume}" if args.resume else "")
+        + ")"
     )
     if args.dry_run:
         return 0
@@ -171,7 +210,7 @@ async def main_async(args) -> int:
         api_key=api_key, model=args.model, timeout_seconds=120, thinking_budget=args.thinking_budget
     )
 
-    records = []
+    records = list(previous)
     quota_streak = 0
     for index, (use_case, case) in enumerate(
         plan, 1
@@ -216,6 +255,9 @@ def main() -> int:
     parser.add_argument("--reps", type=int, default=2)
     parser.add_argument("--pace-seconds", type=float, default=4.0, help="pausa entre chamadas")
     parser.add_argument("--cases", help="nomes separados por vírgula (padrão: todos)")
+    parser.add_argument(
+        "--resume", help="resultado anterior: roda só o que ainda não tem resposta nele"
+    )
     parser.add_argument(
         "--dry-run", action="store_true", help="só mostra quantas chamadas seriam feitas"
     )

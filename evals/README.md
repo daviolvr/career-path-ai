@@ -9,9 +9,12 @@ python -m evals.run_eval --dry-run                      # só conta as chamadas
 python -m evals.run_eval --env-file .env         # 6 casos x 3 usos x 2 repetições = 36 chamadas
 python -m evals.run_eval --env-file .env --cases junior_backend --reps 3
 python -m evals.run_eval --env-file .env --thinking-budget -1   # compara com raciocínio dinâmico
+python -m evals.run_eval --env-file .env --resume evals/results/<arquivo>.json   # só o que falta
 ```
 
 O relatório completo (saídas e latências) vai para `evals/results/` (ignorado pelo git).
+
+**Cota.** A chave gratuita permite ~20 chamadas por dia para o `gemini-2.5-flash`, menos que as 36 do conjunto. Quando a cota acaba, o script para e grava o que conseguiu; no dia seguinte, `--resume` roda só as chamadas sem resposta e grava um arquivo novo com o conjunto somado (exige o mesmo modelo e `--thinking-budget`; falhas de cota, timeout ou provedor contam como sem resposta).
 
 ## O que é medido
 
